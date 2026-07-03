@@ -14,39 +14,30 @@ router = APIRouter(prefix="/productos", tags=["Productos & Catálogo"])
 
 # ─── GET /productos ───────────────────────────────────────────────────────────
 @router.get("", response_model=List[ProductoResponse])
-def listar_productos(
-    categoria_id: Optional[int] = None,
-    db: Session = Depends(get_db)
-):
-    """
-    HU01: Lista los productos disponibles de la carta.
-    Permite filtrar opcionalmente por categoría.
-    HU02: Debería calcular si cada producto contiene algún insumo alérgeno.
-
-    BUG #003 (activo): El endpoint retorna los productos directamente desde el ORM
-    sin hacer el JOIN Receta → Insumo para verificar es_alergeno.
-    El campo es_alergeno siempre llegará como False al frontend.
-    """
+def listar_productos(categoria_id: Optional[int] = None, db: Session = Depends(get_db)):
     query = db.query(Producto).filter(Producto.disponible == True)
     if categoria_id:
         query = query.filter(Producto.id_categoria == categoria_id)
     productos = query.all()
 
-    # BUG #003: se retorna sin calcular es_alergeno por producto
-    return productos
-
-    # ====================================================================
-    # NOTA DE QA — Corrección del Bug #003:
-    # ====================================================================
-    # resultado = []
-    # for p in productos:
-    #     tiene_alergeno = any(
-    #         receta.insumo.es_alergeno for receta in p.recetas
-    #     )
-    #     p_dict = ProductoResponse.model_validate(p)
-    #     p_dict.es_alergeno = tiene_alergeno
-    #     resultado.append(p_dict)
-    # return resultado
+    # CORRECCIÓN Bug #003: ahora sí calcula es_alergeno por producto
+    resultado = []
+    for p in productos:
+        tiene_alergeno = any(
+            receta.insumo.es_alergeno for receta in p.recetas
+        )
+        p_response = ProductoResponse(
+            id_producto=p.id_producto,
+            id_categoria=p.id_categoria,
+            nombre=p.nombre,
+            descripcion=p.descripcion,
+            precio=p.precio,
+            imagen_url=p.imagen_url,
+            disponible=p.disponible,
+            es_alergeno=tiene_alergeno
+        )
+        resultado.append(p_response)
+    return resultado
 
 
 # ─── GET /productos/categorias ────────────────────────────────────────────────

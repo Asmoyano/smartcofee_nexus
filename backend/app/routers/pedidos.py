@@ -73,25 +73,11 @@ def crear_pedido(payload: PedidoCreate, db: Session = Depends(get_db)):
             Producto.id_producto == item.id_producto
         ).first()
 
-        if not producto:
+        if not producto.disponible:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"El producto con ID {item.id_producto} no existe."
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"El producto '{producto.nombre}' no está disponible."
             )
-
-        # ----------------------------------------------------------------
-        # BUG #004 (activo): falta validar producto.disponible == True.
-        # El pedido se acepta aunque el producto esté marcado como agotado.
-        # ----------------------------------------------------------------
-
-        # ====================================================================
-        # NOTA DE QA — Corrección del Bug #004:
-        # ====================================================================
-        # if not producto.disponible:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail=f"El producto '{producto.nombre}' no está disponible."
-        #     )
 
         subtotal_item = producto.precio * item.cantidad_pedida
         monto_total += subtotal_item
