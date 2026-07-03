@@ -93,7 +93,7 @@ class PedidoCreate(BaseModel):
     id_mesa: int
     id_cliente: Optional[int] = None
     id_usuario: Optional[int] = None
-    detalles: List[DetallePedidoCreate] = Field(..., min_items=1)
+    detalles: List[DetallePedidoCreate] = Field(..., min_length=1)
 
 class PedidoResponse(BaseModel):
     id_pedido: int
