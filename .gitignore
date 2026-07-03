@@ -1,0 +1,58 @@
+# ==========================================
+# Gitignore Global - SmartCoffee Nexus
+# ==========================================
+
+# --- Entorno Virtual Python (Raíz) ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Backend (FastAPI) ---
+backend/**/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.pytest_cache/
+backend/.mypy_cache/
+
+# Bases de Datos Locales (SQLite)
+backend/*.db
+backend/*.sqlite3
+
+# --- Frontend (Node / Next.js / React) ---
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.pnpm-store/
+
+# Archivos de registro de paquetes (Opcional, si prefieres no subirlos)
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# --- Variables de Entorno (Seguridad Global) ---
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+backend/.env
+frontend/.env
+
+# --- Configuraciones de Editores / IDEs ---
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# --- Archivos del Sistema Operativo ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
