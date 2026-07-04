@@ -18,6 +18,7 @@ class InsumoBase(BaseModel):
     stock_actual: float = Field(..., ge=0.0)
     stock_minimo: float = Field(..., ge=0.0)
     unidad_medida: str = Field(..., min_length=1)
+    es_alergeno: bool = False
 
 class InsumoCreate(InsumoBase):
     pass

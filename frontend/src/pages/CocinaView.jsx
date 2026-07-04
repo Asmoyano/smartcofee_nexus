@@ -142,20 +142,9 @@ export default function CocinaView() {
   useEffect(() => {
     cargarPedidosCocina()
 
-    // 2. TA07-3: Conexión WebSocket para recibir alertas en Tiempo Real
-    const ws = new WebSocket(`${WS_URL}/ws`)
-
-    ws.onmessage = (event) => {
-      // Cuando entra una actualización (Ej: un cliente crea un pedido nuevo o cambia un estado),
-      // refrescamos el monitor automáticamente sin obligar al cocinero a presionar F5
-      cargarPedidosCocina()
-    }
-
-    ws.onerror = () => {
-      console.error('Error en la conexión del WebSocket de Cocina')
-    }
-
-    return () => ws.close() // Limpieza de la sesión al desmontar
+    // Polling cada 5 segundos para mantener la cola actualizada
+    const intervalo = setInterval(cargarPedidosCocina, 5000)
+    return () => clearInterval(intervalo)
   }, [])
 
   // 3. TA06-1: Botones de Acción Interactiva para mutar estados

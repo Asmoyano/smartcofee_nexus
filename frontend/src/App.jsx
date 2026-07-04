@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import ClienteView from './pages/ClienteView'
 import AdminView from './pages/AdminView'
+import CocinaView from './pages/CocinaView'
+
 
 const estilos = {
   pantallaInicio: {
@@ -77,6 +79,8 @@ export default function App() {
 
         {/* Fallback para cualquier ruta no definida */}
         <Route path="*" element={<InicioSinQR />} />
+
+        <Route path="/cocina" element={<CocinaView />} />
       </Routes>
     </BrowserRouter>
   )
