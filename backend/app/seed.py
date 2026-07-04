@@ -89,6 +89,5 @@ def seed_data():
         db.close()
 
 if __name__ == "__main__":
-    # Asegura que las tablas existan antes de insertar
     Base.metadata.create_all(bind=engine)
     seed_data()

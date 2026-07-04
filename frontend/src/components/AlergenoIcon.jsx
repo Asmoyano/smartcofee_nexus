@@ -1,14 +1,3 @@
-/**
- * TA02-3: Componente visual que muestra una etiqueta de advertencia de alérgeno.
- * Se renderiza únicamente cuando es_alergeno es true.
- *
- * BUG #003 visible aquí: como el endpoint GET /productos devuelve
- * es_alergeno: false siempre, este ícono nunca aparece en el catálogo
- * aunque el producto sí contenga insumos alérgenos.
- * Solo aparece correctamente en el detalle individual (GET /productos/{id})
- * porque ese endpoint sí hace el JOIN correcto.
- */
-
 const estilos = {
   badge: {
     display: 'inline-flex',

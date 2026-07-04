@@ -47,13 +47,6 @@ def obtener_tiempo_espera_estimado(db: Session = Depends(get_db)):
 def descontar_stock_por_pedido(id_pedido: int, db: Session = Depends(get_db)):
     """
     TA09-2: Dispara el descuento de insumos cuando una orden pasa a producción.
-    
-    BUG #001 (activo): Ejecuta los descuentos y guarda iteración por iteración 
-    mediante db.commit() sueltos sin manejar una transacción atómica estructurada. 
-    Si el proceso se interrumpe a la mitad, la base de datos queda corrupta e inconsistente.
-
-    BUG #005 (activo): Evalúa 'stock_actual <= stock_minimo' bloqueando pedidos
-    de forma errónea cuando el insumo está exactamente sobre el límite de alerta.
     """
     pedido = db.query(Pedido).filter(Pedido.id_pedido == id_pedido).first()
     if not pedido:
@@ -62,7 +55,6 @@ def descontar_stock_por_pedido(id_pedido: int, db: Session = Depends(get_db)):
             detail=f"El pedido con ID {id_pedido} no existe."
         )
 
-    # Recorrer el detalle del pedido (BUG #001: Sin bloque transaccional unificado)
     for detalle in pedido.detalles:
         producto = db.query(Producto).filter(
             Producto.id_producto == detalle.id_producto
@@ -74,7 +66,6 @@ def descontar_stock_por_pedido(id_pedido: int, db: Session = Depends(get_db)):
                 Insumo.id_insumo == receta.id_insumo
             ).first()
 
-            # BUG #005: Control de frontera erróneo '<=' en vez de '<'
             if insumo.stock_actual <= insumo.stock_minimo:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -86,6 +77,6 @@ def descontar_stock_por_pedido(id_pedido: int, db: Session = Depends(get_db)):
             insumo.stock_actual -= cantidad_total_a_descontar
             
             db.add(insumo)
-            db.commit()  # Guardado fragmentado por ciclo (Causa raíz del BUG #001)
+            db.commit()
 
     return {"status": "Stock descontado exitosamente conforme a recetas del pedido"}

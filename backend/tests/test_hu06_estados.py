@@ -1,8 +1,3 @@
-"""
-Tests Sprint 2 — HU06: Actualización de estado de pedidos en cocina
-Cubre TA06-2 (PATCH /estado) y TA06-3 (auditoría de timestamps)
-Todos los casos deben pasar — no hay bugs en HU06.
-"""
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app

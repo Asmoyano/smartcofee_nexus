@@ -163,7 +163,7 @@ export default function CocinaView() {
       // Actualizamos la vista local
       await cargarPedidosCocina()
     } catch (err) {
-      // Captura los mensajes de error del backend (¡Aquí se reflejarán los Bugs #001 y #005!)
+      // Captura los mensajes de error del backend
       setError(err.message)
     }
   }

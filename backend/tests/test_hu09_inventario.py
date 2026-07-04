@@ -1,8 +1,3 @@
-"""
-Tests Sprint 2 — HU09: Gestión de inventario y descuento automático de stock
-Cubre TA09-2 (descuento automático), TA09-3 (gestión de insumos), Bug #005.
-Resultado esperado: 4 pass, 1 fail (CP-HU09-03 → Bug #005)
-"""
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
@@ -11,8 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.models import Mesa, Producto, Categoria, Insumo, Receta
 
-import app.models as models 
-from app.models import Mesa, Producto, Categoria, Insumo, Receta
+from app import models
 
 SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
 engine_test = create_engine(
@@ -59,7 +53,6 @@ def setup_db():
     ))
 
     # Insumo con stock exactamente igual al mínimo
-    # CP-HU09-03: con Bug #005 activo, este también aparecerá en alerta (incorrecto)
     db.add(Insumo(
         nombre="Azúcar",
         stock_actual=200.0,
@@ -197,7 +190,7 @@ def test_descuento_automatico_reduce_stock_correctamente():
     id_pedido = _crear_y_marcar_listo()
 
     # Disparar descuento automático (TA09-2)
-    res_descuento = client.post(f"/inventario/descontar-pedido/{id_pedido}")
+    res_descuento = client.post(f"/inventario/descontar/{id_pedido}")
     assert res_descuento.status_code == 200
 
     # Verificar que el stock bajó exactamente 36g (18g × 2 unidades)

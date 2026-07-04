@@ -114,10 +114,6 @@ def actualizar_estado_pedido(
     """
     TA06-2: Actualiza el estado de un pedido en tiempo real.
     Maneja marcas temporales de auditoría en cocina (TA06-3).
-
-    BUG #002 (activo): Usa send_personal_message apuntando a una sola conexión
-    en lugar de broadcast. Provoca que el resto de pantallas de cocina/clientes
-    no se enteren de la actualización en tiempo real.
     """
     pedido = db.query(Pedido).filter(Pedido.id_pedido == id_pedido).first()
     if not pedido:
@@ -139,7 +135,7 @@ def actualizar_estado_pedido(
     db.refresh(pedido)
 
     # Notificación vía WebSockets (TA07-3)
-    # INYECCIÓN BUG #002
+
     try:
         if manager.active_connections:
             # Bug intencional: se envía solo a la conexión indexada [0]
@@ -149,8 +145,6 @@ def actualizar_estado_pedido(
                     manager.active_connections[0]
                 )
             )
-            # El código correcto para solucionar el bug debería ser:
-            # asyncio.run(manager.broadcast({"id_pedido": pedido.id_pedido, "estado": pedido.estado}))
     except Exception:
         pass
 

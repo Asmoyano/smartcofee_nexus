@@ -30,8 +30,6 @@ class InsumoResponse(InsumoBase):
         from_attributes = True
 
 # ─── INSUMO EN RECETA (TA02-2) ───────────────────────────────────────────────
-# Schema nuevo: representa un insumo tal como aparece dentro de la receta
-# de un producto. Se usa en ProductoDetalleResponse para mostrar ingredientes.
 class InsumoEnReceta(BaseModel):
     id_insumo: int
     nombre: str

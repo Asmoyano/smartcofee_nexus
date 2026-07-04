@@ -149,11 +149,6 @@ export default function ProductCard({ producto, onAgregar }) {
         <span style={estilos.nombre}>{producto.nombre}</span>
         <span style={estilos.descripcion}>{producto.descripcion}</span>
 
-        {/*
-          BUG #003 visible: producto.es_alergeno siempre es false aquí
-          porque viene del endpoint de lista que no calcula el campo.
-          El ícono nunca se renderiza desde la tarjeta de catálogo.
-        */}
         <AlergenoIcon visible={producto.es_alergeno} />
 
         <div style={estilos.fila}>
@@ -179,7 +174,7 @@ export default function ProductCard({ producto, onAgregar }) {
                 <p style={{ fontSize: '14px', color: '#595959' }}>{detalle.descripcion}</p>
                 <span style={estilos.precio}>S/ {detalle.precio.toFixed(2)}</span>
 
-                {/* TA02-3: Ícono de alérgeno en el detalle — aquí SÍ funciona */}
+                {/* TA02-3: Ícono de alérgeno en el detalle*/}
                 <AlergenoIcon visible={detalle.es_alergeno} />
 
                 {/* TA02-2: Lista de ingredientes con sus alérgenos */}

@@ -1,6 +1,7 @@
 // Dirección base del backend FastAPI
-// Cambia la IP según tu red local si es necesario [http://10.148.251.77:8000, http://192.168.18.54:8000]
-const BASE_URL = 'http://192.168.18.18:8000';
+// Cambiar IP según red local 
+// redes propias: [http://10.148.251.77:8000, http://192.168.18.54:8000, http://192.168.18.18:8000] (para no usar ipconfig a cada rato)
+const BASE_URL = 'http://192.168.x.x:8000';
 
 // URL base para conexiones en Tiempo Real mediante WebSockets (TA07-3)
 // Reemplaza 'http://' por 'ws://' manteniendo el mismo host y puerto
@@ -11,7 +12,6 @@ export const WS_URL = BASE_URL.replace(/^http/, 'ws');
 /**
  * HU01: Obtiene la lista de productos disponibles.
  * Opcionalmente filtra por categoría.
- * NOTA: Este endpoint contiene el Bug #003 — es_alergeno siempre llega como false.
  */
 export async function getProductos(categoriaId = null) {
   const url = categoriaId
@@ -128,7 +128,6 @@ export async function getPedidos(estado = null) {
 
 /**
  * TA06-2: Modifica el estado transaccional de una comanda en cocina.
- * Nota: El backend gatilla aquí el Bug #002 (WebSocket individual).
  */
 export async function actualizarEstadoPedido(idPedido, nuevoEstado) {
   const res = await fetch(`${BASE_URL}/pedidos/${idPedido}/estado`, {
@@ -145,7 +144,6 @@ export async function actualizarEstadoPedido(idPedido, nuevoEstado) {
 
 /**
  * TA09-2: Dispara la reducción analítica de existencias basándose en recetas.
- * Nota: El backend gatilla aquí el Bug #001 (Falta de atrocidad) y Bug #005 (Frontera <=).
  */
 export async function descontarStockPorPedido(idPedido) {
   const res = await fetch(`${BASE_URL}/inventario/descontar-pedido/${idPedido}`, {
