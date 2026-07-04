@@ -19,7 +19,7 @@ app = FastAPI(
 # pueda consumir los endpoints del backend sin bloqueos de seguridad del navegador.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://192.168.18.54:5173", "http://10.148.251.229:5173"],  # Ajustar según IP local
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://192.168.18.54:5173", "http://192.168.18.18:5173", "http://10.148.251.229:5173"],  # Ajustar según IP local
     allow_credentials=True,
     allow_methods=["*"],  # Permite GET, POST, PUT, DELETE, PATCH, etc.
     allow_headers=["*"],

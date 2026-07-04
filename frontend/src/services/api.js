@@ -1,6 +1,6 @@
 // Dirección base del backend FastAPI
 // Cambia la IP según tu red local si es necesario [http://10.148.251.77:8000, http://192.168.18.54:8000]
-const BASE_URL = 'http://10.148.251.229:8000';
+const BASE_URL = 'http://192.168.18.18:8000';
 
 // URL base para conexiones en Tiempo Real mediante WebSockets (TA07-3)
 // Reemplaza 'http://' por 'ws://' manteniendo el mismo host y puerto
