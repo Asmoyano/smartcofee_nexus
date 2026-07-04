@@ -29,6 +29,7 @@ class Insumo(Base):
     recetas = relationship("Receta", back_populates="insumo")
 
 
+
 class Producto(Base):
     __tablename__ = "productos"
 
@@ -43,7 +44,6 @@ class Producto(Base):
     categoria       = relationship("Categoria", back_populates="productos")
     recetas         = relationship("Receta", back_populates="producto")
     detalles_pedido = relationship("DetallePedido", back_populates="producto")
-
 
 class Receta(Base):
     __tablename__ = "recetas"
@@ -98,6 +98,8 @@ class Pedido(Base):
     # estados validos: pendiente | en_preparacion | listo | entregado | cancelado
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
     fecha_entrega  = Column(DateTime(timezone=True), nullable=True)
+    fecha_inicio_prep = Column(DateTime, nullable=True) # Cuándo pasa a "En Preparación"
+    fecha_fin_prep = Column(DateTime, nullable=True)    # Cuándo pasa a "Listo"
     total_pago     = Column(Float, nullable=False, default=0.0)
 
     mesa     = relationship("Mesa", back_populates="pedidos")

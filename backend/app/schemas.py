@@ -12,6 +12,22 @@ class CategoriaResponse(CategoriaBase):
     class Config:
         from_attributes = True
 
+# --- Esquemas para Insumos e Inventario ---
+class InsumoBase(BaseModel):
+    nombre: str = Field(..., min_length=1)
+    stock_actual: float = Field(..., ge=0.0)
+    stock_minimo: float = Field(..., ge=0.0)
+    unidad_medida: str = Field(..., min_length=1)
+
+class InsumoCreate(InsumoBase):
+    pass
+
+class InsumoResponse(InsumoBase):
+    id_insumo: int
+
+    class Config:
+        from_attributes = True
+
 # ─── INSUMO EN RECETA (TA02-2) ───────────────────────────────────────────────
 # Schema nuevo: representa un insumo tal como aparece dentro de la receta
 # de un producto. Se usa en ProductoDetalleResponse para mostrar ingredientes.
@@ -103,11 +119,16 @@ class PedidoResponse(BaseModel):
     estado: str
     fecha_creacion: datetime
     fecha_entrega: Optional[datetime]
+    fecha_inicio_prep: Optional[datetime] = None
+    fecha_fin_prep: Optional[datetime] = None
     total_pago: float
     detalles: List[DetallePedidoResponse]
 
     class Config:
         from_attributes = True
+
+class PedidoEstadoUpdate(BaseModel):
+    estado: str = Field(..., description="Estados válidos: Pendiente, En Preparación, Listo, Entregado")
 
 
 # 5. SCHEMAS DE MESA (HU14)
@@ -127,6 +148,21 @@ class ClienteBase(BaseModel):
 
 class ClienteResponse(ClienteBase):
     id_cliente: int
+
+    class Config:
+        from_attributes = True
+
+# --- Esquemas para Recetas ---
+class RecetaBase(BaseModel):
+    id_insumo: int
+    cantidad_usada: float = Field(..., gt=0.0)
+
+class RecetaCreate(RecetaBase):
+    pass
+
+class RecetaResponse(RecetaBase):
+    id_insumo: int
+    id_producto: int
 
     class Config:
         from_attributes = True

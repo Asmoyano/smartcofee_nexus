@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
-from app.routers import productos, mesas, pedidos
+from app.routers import productos, mesas, pedidos, inventario
 
 # Crear de forma automática las tablas en la base de datos si no existen
 Base.metadata.create_all(bind=engine)
@@ -31,6 +31,7 @@ app.add_middleware(
 app.include_router(productos.router)
 app.include_router(mesas.router)
 app.include_router(pedidos.router)
+app.include_router(inventario.router)
 
 @app.get("/", tags=["Root"])
 def root():

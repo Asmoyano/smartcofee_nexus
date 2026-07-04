@@ -2,6 +2,10 @@
 // Cambia la IP según tu red local si es necesario [http://10.148.251.77:8000, http://192.168.18.54:8000]
 const BASE_URL = 'http://10.148.251.229:8000';
 
+// URL base para conexiones en Tiempo Real mediante WebSockets (TA07-3)
+// Reemplaza 'http://' por 'ws://' manteniendo el mismo host y puerto
+export const WS_URL = BASE_URL.replace(/^http/, 'ws');
+
 // ─── PRODUCTOS ────────────────────────────────────────────────────────────────
 
 /**
@@ -117,5 +121,64 @@ export async function getPedidos(estado = null) {
     : `${BASE_URL}/pedidos`
   const res = await fetch(url)
   if (!res.ok) throw new Error('Error al cargar pedidos')
+  return res.json()
+}
+
+// ─── SPRINT 2: CONTROL DE ESTADOS E INVENTARIO ────────────────────────────────
+
+/**
+ * TA06-2: Modifica el estado transaccional de una comanda en cocina.
+ * Nota: El backend gatilla aquí el Bug #002 (WebSocket individual).
+ */
+export async function actualizarEstadoPedido(idPedido, nuevoEstado) {
+  const res = await fetch(`${BASE_URL}/pedidos/${idPedido}/estado`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado: nuevoEstado })
+  })
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.detail || 'Error al cambiar estado del pedido')
+  }
+  return res.json()
+}
+
+/**
+ * TA09-2: Dispara la reducción analítica de existencias basándose en recetas.
+ * Nota: El backend gatilla aquí el Bug #001 (Falta de atrocidad) y Bug #005 (Frontera <=).
+ */
+export async function descontarStockPorPedido(idPedido) {
+  const res = await fetch(`${BASE_URL}/inventario/descontar-pedido/${idPedido}`, {
+    method: 'POST'
+  })
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.detail || 'Error al descontar insumos de la base de datos')
+  }
+  return res.json()
+}
+
+/**
+ * TA07-1: Obtiene el tiempo consolidado en minutos esperado por la cola FIFO de cocina.
+ */
+export async function getTiempoEsperaEstimado() {
+  const res = await fetch(`${BASE_URL}/inventario/tiempo-espera-estimado`)
+  if (!res.ok) throw new Error('Error al calcular el tiempo de espera estimado')
+  return res.json()
+}
+
+/**
+ * TA09-3: Envía el payload para registrar un nuevo insumo básico en el panel administrativo.
+ */
+export async function crearInsumo(datosInsumo) {
+  const res = await fetch(`${BASE_URL}/inventario/insumos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datosInsumo)
+  })
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.detail || 'Error al crear el insumo')
+  }
   return res.json()
 }

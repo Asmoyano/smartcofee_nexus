@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime
+import asyncio
 from app.database import get_db
 from app.models import Pedido, DetallePedido, Producto, Mesa
-from app.schemas import PedidoCreate, PedidoResponse
+from app.schemas import PedidoCreate, PedidoResponse, PedidoEstadoUpdate
+from app.websocket_manager import manager  # Gestión de WebSockets activa
 
 router = APIRouter(prefix="/pedidos", tags=["Pedidos & Órdenes"])
 
@@ -16,9 +19,6 @@ def listar_pedidos(
 ):
     """
     TA05-2: Lista todos los pedidos ordenados por fecha de creación ASC (FIFO).
-    El cocinero siempre ve primero el pedido más antiguo — el que llegó antes
-    es el primero en prepararse. Permite filtrar opcionalmente por estado
-    (pendiente, en_preparacion, listo, entregado, cancelado).
     """
     query = db.query(Pedido).order_by(Pedido.fecha_creacion.asc())
 
@@ -39,11 +39,6 @@ def listar_pedidos(
 def crear_pedido(payload: PedidoCreate, db: Session = Depends(get_db)):
     """
     HU05: Registra un nuevo pedido vinculado a una mesa.
-    Calcula subtotales por ítem y el total consolidado del pedido.
-
-    BUG #004 (activo): No valida que el producto esté disponible antes
-    de aceptarlo en el pedido. Un producto marcado como disponible=False
-    puede ser pedido sin que el sistema lo rechace.
     """
     # 1. Validar que la mesa exista
     mesa = db.query(Mesa).filter(Mesa.id_mesa == payload.id_mesa).first()
@@ -107,4 +102,56 @@ def obtener_pedido(id_pedido: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"El pedido con ID {id_pedido} no existe."
         )
+    return pedido
+
+# ─── PATCH /pedidos/{id}/estado (NUEVO SPRINT 2) ──────────────────────────────
+@router.patch("/{id_pedido}/estado", response_model=PedidoResponse)
+def actualizar_estado_pedido(
+    id_pedido: int,
+    payload: PedidoEstadoUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    TA06-2: Actualiza el estado de un pedido en tiempo real.
+    Maneja marcas temporales de auditoría en cocina (TA06-3).
+
+    BUG #002 (activo): Usa send_personal_message apuntando a una sola conexión
+    en lugar de broadcast. Provoca que el resto de pantallas de cocina/clientes
+    no se enteren de la actualización en tiempo real.
+    """
+    pedido = db.query(Pedido).filter(Pedido.id_pedido == id_pedido).first()
+    if not pedido:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"El pedido con ID {id_pedido} no existe."
+        )
+
+    nuevo_estado = payload.estado.lower()
+
+    # Auditoría de tiempos en cocina (TA06-3)
+    if nuevo_estado == "en_preparacion" and pedido.estado == "pendiente":
+        pedido.fecha_inicio_prep = datetime.utcnow()
+    elif nuevo_estado == "listo" and pedido.estado == "en_preparacion":
+        pedido.fecha_fin_prep = datetime.utcnow()
+
+    pedido.estado = nuevo_estado
+    db.commit()
+    db.refresh(pedido)
+
+    # Notificación vía WebSockets (TA07-3)
+    # INYECCIÓN BUG #002
+    try:
+        if manager.active_connections:
+            # Bug intencional: se envía solo a la conexión indexada [0]
+            asyncio.run(
+                manager.send_personal_message(
+                    f"Pedido {pedido.id_pedido} cambiado a {pedido.estado}", 
+                    manager.active_connections[0]
+                )
+            )
+            # El código correcto para solucionar el bug debería ser:
+            # asyncio.run(manager.broadcast({"id_pedido": pedido.id_pedido, "estado": pedido.estado}))
+    except Exception:
+        pass
+
     return pedido
