@@ -1,44 +1,54 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 from app.database import Base, engine
 from app.routers import productos, mesas, pedidos, inventario
 
-# Crear de forma automática las tablas en la base de datos si no existen
+load_dotenv()
+
+# Crea las tablas automáticamente si no existen.
+# En producción con PostgreSQL esto crea el schema en el primer arranque.
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="SmartCoffee Nexus API",
-    description="Backend para el sistema de atención y gestión de pedidos vía QR - Sprint 1",
-    version="1.0.0"
+    description="Sistema de autoservicio digital para cafeterías basado en QR.",
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
-# ==========================================
-# CONFIGURACIÓN DE CORS (Para conectar con Vite)
-# ==========================================
-# Permite el frontend local (que correrá en el puerto 5173 de Vite) 
-# pueda consumir los endpoints del backend sin bloqueos de seguridad del navegador.
+# CORS: en producción permite el dominio de Vercel configurado en .env.
+# En desarrollo permite localhost y cualquier IP local.
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173"
+).split(",")
+
+# Siempre incluimos el comodín para Vercel preview deployments
+ALLOWED_ORIGINS += ["https://*.vercel.app"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://192.168.18.54:5173", "http://192.168.18.18:5173", "http://10.148.251.229:5173"],  # Ajustar según IP local
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["*"],  # Permite GET, POST, PUT, DELETE, PATCH, etc.
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ==========================================
-# INCLUSIÓN DE ROUTERS MODULARES
-# ==========================================
 app.include_router(productos.router)
 app.include_router(mesas.router)
 app.include_router(pedidos.router)
 app.include_router(inventario.router)
 
+
 @app.get("/", tags=["Root"])
 def root():
-    """Endpoint de control para verificar que el servidor responda correctamente."""
     return {
         "status": "online",
         "proyecto": "SmartCoffee Nexus",
-        "sprint": 1,
-        "documentacion": "/docs"
+        "version": "2.0.0",
+        "docs": "/docs"
     }

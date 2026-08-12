@@ -1,18 +1,9 @@
-// Dirección base del backend FastAPI
-// Cambiar IP según red local 
-// redes propias: [http://10.148.251.77:8000, http://192.168.18.54:8000, http://192.168.18.18:8000] (para no usar ipconfig a cada rato)
-const BASE_URL = 'http://192.168.x.x:8000';
+// La URL del backend se lee desde la variable de entorno.
+// En local usa el .env.local, en Vercel usa la variable configurada en el dashboard.
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+export const WS_URL = BASE_URL.replace(/^http/, 'ws')
 
-// URL base para conexiones en Tiempo Real mediante WebSockets (TA07-3)
-// Reemplaza 'http://' por 'ws://' manteniendo el mismo host y puerto
-export const WS_URL = BASE_URL.replace(/^http/, 'ws');
-
-// ─── PRODUCTOS ────────────────────────────────────────────────────────────────
-
-/**
- * HU01: Obtiene la lista de productos disponibles.
- * Opcionalmente filtra por categoría.
- */
+// ─── PRODUCTOS ───────────────────────────────────────────────────────────────
 export async function getProductos(categoriaId = null) {
   const url = categoriaId
     ? `${BASE_URL}/productos?categoria_id=${categoriaId}`
@@ -22,62 +13,39 @@ export async function getProductos(categoriaId = null) {
   return res.json()
 }
 
-/**
- * HU01 / TA02-2: Obtiene el detalle de un producto incluyendo sus insumos y alérgenos.
- * Este endpoint SÍ calcula correctamente es_alergeno vía JOIN Receta → Insumo.
- */
 export async function getProductoDetalle(idProducto) {
   const res = await fetch(`${BASE_URL}/productos/${idProducto}`)
   if (!res.ok) throw new Error('Producto no encontrado')
   return res.json()
 }
 
-/**
- * TA01-2: Obtiene la lista de categorías para las pestañas del catálogo.
- */
 export async function getCategorias() {
   const res = await fetch(`${BASE_URL}/productos/categorias`)
   if (!res.ok) throw new Error('Error al cargar categorías')
   return res.json()
 }
 
-/**
- * TA01-2: Crea un nuevo producto (panel de administración).
- */
 export async function crearProducto(datos) {
   const res = await fetch(`${BASE_URL}/productos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos)
   })
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.detail || 'Error al crear producto')
-  }
+  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Error al crear producto') }
   return res.json()
 }
 
-/**
- * TA01-2: Actualiza un producto existente (panel de administración).
- */
 export async function actualizarProducto(idProducto, datos) {
   const res = await fetch(`${BASE_URL}/productos/${idProducto}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos)
   })
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.detail || 'Error al actualizar producto')
-  }
+  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Error al actualizar') }
   return res.json()
 }
 
 // ─── MESAS ────────────────────────────────────────────────────────────────────
-
-/**
- * HU14 / TA14-1: Valida que el código QR escaneado corresponda a una mesa real.
- */
 export async function validarMesaQR(qrCode) {
   const res = await fetch(`${BASE_URL}/mesas/${qrCode}`)
   if (!res.ok) throw new Error('Código QR inválido. La mesa no existe.')
@@ -85,36 +53,22 @@ export async function validarMesaQR(qrCode) {
 }
 
 // ─── PEDIDOS ──────────────────────────────────────────────────────────────────
-
-/**
- * HU05 / TA14-3: Crea un pedido vinculando los productos seleccionados a la mesa.
- */
 export async function crearPedido(payload) {
   const res = await fetch(`${BASE_URL}/pedidos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.detail || 'Error al crear pedido')
-  }
+  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Error al crear pedido') }
   return res.json()
 }
 
-/**
- * HU05: Consulta el estado actual de un pedido por su ID.
- */
 export async function getPedido(idPedido) {
   const res = await fetch(`${BASE_URL}/pedidos/${idPedido}`)
   if (!res.ok) throw new Error('Pedido no encontrado')
   return res.json()
 }
 
-/**
- * TA05-2: Lista todos los pedidos ordenados por FIFO (más antiguo primero).
- * Opcionalmente filtra por estado.
- */
 export async function getPedidos(estado = null) {
   const url = estado
     ? `${BASE_URL}/pedidos?estado=${estado}`
@@ -124,59 +78,74 @@ export async function getPedidos(estado = null) {
   return res.json()
 }
 
-// ─── SPRINT 2: CONTROL DE ESTADOS E INVENTARIO ────────────────────────────────
-
-/**
- * TA06-2: Modifica el estado transaccional de una comanda en cocina.
- */
 export async function actualizarEstadoPedido(idPedido, nuevoEstado) {
   const res = await fetch(`${BASE_URL}/pedidos/${idPedido}/estado`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ estado: nuevoEstado })
   })
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.detail || 'Error al cambiar estado del pedido')
-  }
+  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Error al actualizar estado') }
   return res.json()
 }
 
-/**
- * TA09-2: Dispara la reducción analítica de existencias basándose en recetas.
- */
-export async function descontarStockPorPedido(idPedido) {
-  const res = await fetch(`${BASE_URL}/inventario/descontar-pedido/${idPedido}`, {
-    method: 'POST'
-  })
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.detail || 'Error al descontar insumos de la base de datos')
-  }
+// ─── INVENTARIO ───────────────────────────────────────────────────────────────
+export async function getInventario() {
+  const res = await fetch(`${BASE_URL}/inventario`)
+  if (!res.ok) throw new Error('Error al cargar inventario')
   return res.json()
 }
 
-/**
- * TA07-1: Obtiene el tiempo consolidado en minutos esperado por la cola FIFO de cocina.
- */
+export async function getAlertasStock() {
+  const res = await fetch(`${BASE_URL}/inventario/alertas`)
+  if (!res.ok) throw new Error('Error al cargar alertas')
+  return res.json()
+}
+
 export async function getTiempoEsperaEstimado() {
   const res = await fetch(`${BASE_URL}/inventario/tiempo-espera-estimado`)
-  if (!res.ok) throw new Error('Error al calcular el tiempo de espera estimado')
+  if (!res.ok) throw new Error('Error al obtener tiempo estimado')
   return res.json()
 }
 
-/**
- * TA09-3: Envía el payload para registrar un nuevo insumo básico en el panel administrativo.
- */
+export async function actualizarInsumo(idInsumo, datos) {
+  const res = await fetch(`${BASE_URL}/inventario/${idInsumo}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos)
+  })
+  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Error al actualizar insumo') }
+  return res.json()
+}
+
 export async function crearInsumo(datosInsumo) {
   const res = await fetch(`${BASE_URL}/inventario/insumos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datosInsumo)
   })
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.detail || 'Error al crear el insumo')
-  }
+  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Error al crear insumo') }
   return res.json()
+}
+
+export async function descontarStockPorPedido(idPedido) {
+  const res = await fetch(`${BASE_URL}/inventario/descontar-pedido/${idPedido}`, {
+    method: 'POST'
+  })
+  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Error al descontar stock') }
+  return res.json()
+}
+
+// ─── WEBSOCKET ────────────────────────────────────────────────────────────────
+export function crearWebSocketPedido(idPedido, onMensaje) {
+  const ws = new WebSocket(`${WS_URL}/pedidos/ws/${idPedido}`)
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data)
+      onMensaje(data)
+    } catch {
+      console.warn('WS mensaje no JSON:', event.data)
+    }
+  }
+  ws.onerror = (err) => console.error('WS error:', err)
+  return ws
 }
